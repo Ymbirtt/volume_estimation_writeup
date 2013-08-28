@@ -1,7 +1,15 @@
 \section{Motivation and Goals}
 
+The estimation of the volume of a convex shape in $n$ dimensions, $K$ is a long standing problem. Exactly calculating the volume of an arbitrary convex polytope is known to be \#P-complete, %cite
+ but it has been shown by many authors %cite
+that arbitrarily good estimates can be acquired by testing whether a polynomially bounded number of points fall within the shape. The order of this polynomial has been chipped away incrementally over many years until the most recent papers %cite simulated annealing and random walks
+have successfully bounded the number of oracle queries to be within $O^*(n^4)$ and $O^*(n^5)$ respectively, stating that this brings the methods within the realms of a parctical implementation.
+
+In this study, we will test the various features of the $O^*(n^5)$ volume algorithm by implementing a version of it in ANSI C, using the theoretical bounds as a guide to estimate good values for relevant parameters, and finally compare its overall execution time to various exact methods of volume conmputation over various simplices. We will find that the theoretical upper bounds on most parameters are very loose indeed, and that in practice far smaller values are sufficient, resulting in significant savings on real-world execution time, however the assumption of a unit-time oracle proves impractical, and when more detailed information about the shape is available, an exact method is still usually faster, despite its exponential complexity.
+
 \section{Preliminaries}
 \subsection{Notation}
+
 
 
 \subsection{Shapes}
@@ -24,10 +32,10 @@ $$
 
 Less formally, the convex hull of a set of points is the result of wrapping an elastic band around them and letting it snap tightly around them. All convex hulls are convex.
 
-We will define the n-dimensional ice cream of radius $R$, $RI$ as the convex hull of $B$ and the point $(R,0,0,...0)$. Figure \ref{fig_ice_cream} should make the logic behind this name reasonably clear. The n-dimensional ice cream is important for this study because it is the smallest possible convex shape which contains $B$ and is tightly contained within $RB$. It will represent a pathological case for several algorithms, however as the disjoint union of a capless ball and a n-dimensional cone, its volume is tractable. The details can be found in Appendix \ref{app_ice_cream}.
+We will define the n-dimensional ice cream of radius $R$, $RI$ as the convex hull of $B$ and the point $(R,0,0,...0)$. Figure \ref{fig_ice_cream} should make the logic behind this name reasonably clear. The n-dimensional ice cream is important for this study because it is the smallest possible convex shape which contains $B$ and is tightly contained within $RB$. It will represent a pathological case for several algorithms, however as the disjoint union of a capless ball and a n-dimensional cone, its volume, whilst non-trivial, is calculable. The details can be found in Appendix \ref{app_ice_cream}.
 
 $$
-vol(RI) = %Volume of ice cream goes here
+vol(RI) = %Volume of ice cream goes here - cite http://docsdrive.com/pdfs/ansinet/ajms/2011/66-70.pdf
 $$
 
 \subsection{Markov Chains and Random Walks}
@@ -46,6 +54,6 @@ which has been shown both theoretically and in practice to rapidly approach its 
 \subsection{The Volume Estimation Algorithm}
 
 The algorithm we will use follows %lovasz paper
-with two differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$.
+with three differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$. At each stage, if the estimated volume is higher than it is possible for the volume to actually be, we will clamp the estimated volume back down to its maximum.
 
-To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the number of uniformly generated random points in $K_i$ that fall into $K_{i-1}$.
+To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the fraction of uniformly generated random points in $K_i$ that fall into $K_{i-1}$.
