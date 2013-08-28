@@ -1,0 +1,56 @@
+\documentclass{report}
+
+% The ams packages are required to insert any mathematical symbols that you may require
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+% This package is used for embedding things like PDFs and JPEGs into your document
+\usepackage{graphicx}
+% This package is used for drawing pictures (such as trees)
+\usepackage{tikz}
+\usetikzlibrary{arrows,automata}
+% These packages are used for adding pseudo-code to your document
+\usepackage{algorithm2e}
+\usepackage{algorithmic}
+% This package is for if you require an appendix
+\usepackage{appendix}
+
+\usepackage{datetime}
+\usepackage{fancyhdr}
+\usepackage{semantic}
+\usepackage[noload]{qtree}
+\usepackage{comment}
+\usepackage{pdflscape}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage{moreverb}
+\usepackage{caption}
+\usepackage{url}
+\usepackage{layout}
+\usepackage{subfig}
+\usepackage{lineno}
+\usepackage{bm}
+
+\newcommand{\arr}{\mathbb{R}}
+\newcommand{\st}{\;\; st \;\;}
+\newcommand{\nat}{\mathbb{N}}
+\newcommand{\pr}{\mathbb{P}}
+
+\begin{document}
+
+%\input{./title.tex}
+
+\newpage
+
+\tableofcontents
+
+\chapter{Introduction}
+
+\input{./intro.tex}
+
+\chapter{Experiments}
+
+\input{./experiments.tex}
+
+\end{document}
