@@ -1,0 +1,51 @@
+\section{Motivation and Goals}
+
+\section{Preliminaries}
+\subsection{Notation}
+
+
+\subsection{Shapes}
+
+We will call any continuous subset of $\arr^{n}$ a shape. A convex shape, $K$, is one which satisfies
+
+$$
+\forall u, v \in K, \lambda \in [0,1] \quad (\lambda u + (1-\lambda) v) \in K
+$$
+
+Such a combination of points is known as a convex combination. More intuitively, we say that $K$ is convex if any straight line segment between any two points in $K$ lies entirely within $K$. $K$'s boundary does not ``bow inwards".
+
+We will denote by $B$ the unit ball, that is $B = \{x \in \arr^n \st ||x|| \leqslant 1\}$, and abuse notation slightly by donoting the ball of radius $R$ by $RB$. The ball of radius $RB$ is trivially the largest convex shape that will fit within the ball of radius $RB$.
+
+The convex hull of a set of points, denoted $h(P)$, is the set of points defined thus
+
+$$
+x \in h(P) \iff \exists u_1, u_2,...,u_k \in P, \lambda_1, \lambda_2, ..., \lambda_k  \in [0,1] \st x = \sum^{k}_{i=1} \lambda_i u_i \wedge \sum^{k}_{i=1} \lambda_i = 1
+$$
+
+Less formally, the convex hull of a set of points is the result of wrapping an elastic band around them and letting it snap tightly around them. All convex hulls are convex.
+
+We will define the n-dimensional ice cream of radius $R$, $RI$ as the convex hull of $B$ and the point $(R,0,0,...0)$. Figure \ref{fig_ice_cream} should make the logic behind this name reasonably clear. The n-dimensional ice cream is important for this study because it is the smallest possible convex shape which contains $B$ and is tightly contained within $RB$. It will represent a pathological case for several algorithms, however as the disjoint union of a capless ball and a n-dimensional cone, its volume is tractable. The details can be found in Appendix \ref{app_ice_cream}.
+
+$$
+vol(RI) = %Volume of ice cream goes here
+$$
+
+\subsection{Markov Chains and Random Walks}
+
+A Markov Chain is a triple, $(S,P,\bm{\delta})$, where $S$ is referred to as the state space, $P = (p_{st})_{s,t \in S}$ is the transition matrix and $\bm{\delta} = (\delta_s)_{s \in S}$ is the initial probability vector. A realisation of a Markov Chain is a sequence of states, $(x_i)_{i \in \nat}$ such that $\pr (x_0 = s)=\delta_s$, and $\pr(x_i = s_i | x_0 = s_0, ..., x_{i-1} = s_{i-1}) = \pr (x_i = s_i | x_{i-1} = s_{i-1})= p_{s_{i-1}s_{i}}$. We say that $\bm{\pi}$ is a stationary distribution of the Markov Chain if, given that $\bm{\delta} = \bm{\pi}$, the marginal probabilities $\pr(x_i = t) = \pi_t$ for all $i$ and $t$.  It is a standard result from probability theory that, if one can find a probability distribution $\bm{\pi}$ such that
+
+$$
+\forall s,t \in S, \quad \pi_s p_{st} = \pi_t p_{ts}
+$$
+
+Then $\bm{\pi}$ is the stationary distribution for the chain. It should be reasonably obvious that, if $p_{ij} = p_{ji}$ for all pairs of states, then $\bm{\pi}$ is a constant. If a stationary distribution exists for a chain, then, regardless of $\bm{\delta}$, $lim_{i-> \infty} \pr {x_i = s} = \pi_s$.
+
+A random walk through a shape is a markov chain whose state space approximates the interior of a shape. We will use a random walk to sample uniformly at random from the inerior of a shape. By selecting a walk that satisfies $p_{ij} = p_{ji}$, we can can trace some number of steps from this walk, and return the state after some number of steps. The walk we use will be the Hit and Run Walk %cite Fast and Fun
+which has been shown both theoretically and in practice to rapidly approach its stationary distribution, requiring a very small number of steps to produce good randomness. For a walk in the interior of $K$, starting at $\bm{x}_0$, the Hit and Run walk selects a line uniformly at random passing through $\bm{x}_0$ and contained entirely within $K$, then moves to a point uniformly distributed along this line. We will aim to see how many times this must be repeated before the resulting point is uniformly distributed within $K$.
+
+\subsection{The Volume Estimation Algorithm}
+
+The algorithm we will use follows %lovasz paper
+with two differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$.
+
+To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the number of uniformly generated random points in $K_i$ that fall into $K_{i-1}$.
