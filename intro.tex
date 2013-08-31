@@ -11,7 +11,7 @@ $$
 (1-\varepsilon)vol(K) \leqslant v \leqslant (1+\varepsilon)vol(K)
 $$
 
-In this study, we will test the various features of the $O^{*}(n^5)$ volume algorithm by implementing a version of it in ANSI C, using the theoretical bounds as a guide to estimate good values for relevant parameters, and finally compare its overall execution time to various exact methods of volume conmputation over various simplices. We will find that the theoretical upper bounds on most parameters are very loose indeed, and that in practice far smaller values are sufficient, resulting in significant savings on real-world execution time, however the assumption of a unit-time oracle proves impractical, and when more detailed information about the shape is available, an exact method is still usually faster, despite its exponential complexity.
+In this study, we will test the various features of the $O^{*}(n^5)$ volume algorithm by implementing a version of it in ANSI C, using the theoretical bounds as a guide to estimate good values for relevant parameters, and finally compare its overall execution time to various exact methods of volume conmputation over various simplices. We will find that the theoretical upper bounds on most parameters are very loose indeed, and that in practice far smaller values are sufficient, resulting in significant savings on real-world execution time, however the assumption of a unit-time oracle proves impractical, and when more detailed information about the shape is available, an exact method is still usually faster.
 
 \section{Preliminaries}
 \subsection{Notation}
@@ -65,4 +65,32 @@ In the implementation, uniform random numbers are selected via the mersenne twis
 The algorithm we will use follows %lovasz paper
 with three differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$. At each stage, if the estimated volume is higher than it is possible for the volume to actually be, we will clamp the estimated volume back down to its maximum.
 
-To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the fraction of uniformly generated random points in $K_i$ that fall into $K_{i-1}$.
+To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the fraction of uniformly generated random points in $K_i$ that fall into $K_{i-1}$. The algorithm in pseudocode is as follows:
+
+\begin{algorithm}
+\SetAlgoLined
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+
+\caption{An Algorithm for Estimating the Volume of a Convex Shape}\label{alg_vol}
+\Input{$\mathcal{O}_K$, an inclusion oracle for $K$, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, a number of points to use per thread, $n_p$ and an accuracy parameter for the sampling algorithm $\theta$}
+\Output{$v$, an estimate of $vol(K)$}
+
+\Begin{
+	$n_s <- n \lceil \ln (R) \rceil$ \\
+	$v <-$vol$(B)$ \\
+	$\mathcal{O}_{K_0} <- \top$
+	\For{$i <- 1$ \KwTo $n_s$}{
+		$\mathcal{O}_{K_i} <-$ make\_oracle $(e^i, \mathcal{O}_K)$ \\
+		$n_{in} <- 0$
+		\For{$j <- 1$ \KwTo $n_p$}{
+			$p <-$ generate\_point$(O_{K_i})$ \\
+			\If{$\mathcal{O}_{K_{i-1}}(p)$}{
+				$n_{in} <- n_{in} + 1$
+			}
+		}
+		$v <- \frac{n_s v}{n_{in}}$
+	}
+	\KwRet $v$
+}
+\end{algorithm}
