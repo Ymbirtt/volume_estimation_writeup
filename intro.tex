@@ -73,14 +73,14 @@ A random walk through a shape is a markov chain whose state space approximates t
 which has been shown both theoretically and in practice to rapidly approach its stationary distribution, requiring a very small number of steps to produce good randomness. For a walk in the interior of $K$, starting at $\bm{x}_0$, the Hit and Run walk selects a line uniformly at random passing through $\bm{x}_0$ and contained entirely within $K$, then moves to a point uniformly distributed along this line. The number of times this needs to be repeated before a point becomes uniformly distributed in $K$ depends on $n$, and this will be discussed in section \ref{sec_mix}
 
 Selecting the line through $\bm{x}_0$ can be accomplished by standard hyperspherical point picking %cite mathworld
-followed by a binary search. We sample $n$ independent standard normal random variables to pick a random point on the surface of the $n$-dimensional unit hypersphere, $\bm{u}$, and define the line $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in \arr \}$. Since we know that $K$ is contained within the ball of radius $R$, we know that $\bm{x}_0 + 2R\bm{u} \notin K$, and so can perform a bidirectional binary search to find $\overline{\lambda}$ and $\underline{\lambda}$ such that $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in [\underline{\lambda}, \overline{\lambda}] \}$ is tightly contained within $K$. Selecting a $U(\underline{\lambda}, \overline{\lambda})$ random variable will then let us move to a uniformly random point on this line. The algorithm can be described thus:
+followed by a binary search. We sample $n$ independent standard normal random variables to pick a random point on the surface of the $n$-dimensional unit hypersphere, $\bm{u}$, and define the line $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in \arr \}$. Since we know that $K$ is contained within the ball of radius $R$, we know that $\bm{x}_0 + 2R\bm{u} \notin K$, and so can perform a bidirectional binary search to find $\overline{\lambda}$ and $\underline{\lambda}$ such that $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in [\underline{\lambda}, \overline{\lambda}] \}$ is tightly contained within $K$. Selecting a $U(\underline{\lambda}, \overline{\lambda})$ random variable will then let us move to a uniformly random point on this line. Algorithm \ref{alg_samp} specifies this process.
 
 \begin{algorithm}
 \SetAlgoLined
 \SetKwInOut{Input}{input}
 \SetKwInOut{Output}{output}
 
-\caption{An Algorithm for Generating a Uniformly Distributed Random Point in a Convex Shape}\label{alg_vol}
+\caption{An Algorithm for Generating a Uniformly Distributed Random Point in a Convex Shape}\label{alg_samp}
 \Input{$\mathcal{O}_K$, an inclusion oracle for $K$, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, $n_s$, the number of steps to take before returning, and $\theta$, an accuracy parameter}
 \Output{$\bm p$, a point in $K$ randomly distributed to be near uniform on $K$}
 
@@ -118,9 +118,9 @@ In the implementation, uniform random numbers are selected via the mersenne twis
 \subsection{The Volume Estimation Algorithm}
 
 The algorithm we will use follows %lovasz paper
-with three differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$. At each stage, if the estimated volume is higher than it is possible for the volume to actually be, we will clamp the estimated volume back down to its maximum.
+with three differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which previous experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$.
 
-To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the fraction of uniformly generated random points in $K_i$ that fall into $K_{i-1}$. The algorithm in pseudocode is as follows:
+To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the fraction of uniformly generated random points in $K_i$ that fall into $K_{i-1}$. Algorithm \ref{alg_vol} specifies this in pseudocode.
 
 \begin{algorithm}
 \SetAlgoLined
@@ -136,7 +136,7 @@ To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 
 	$v <-\vol_n(B)$ \\
 	$K_0 <- B$
 	\For{$i <- 1$ \KwTo $n_s$}{
-		$K_i <- e^\frac{i}{n}B \cap K)$ \\
+		$K_i <- e^\frac{i}{n}B \cap K$ \\
 		$n_{in} <- 0$
 		\For{$j <- 1$ \KwTo $n_p$}{
 			$p <-$ generate\_point$(K_i)$ \\
@@ -149,3 +149,11 @@ To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 
 	\KwRet $v$
 }
 \end{algorithm}
+
+\subsection{Neglected Details}
+
+This field is very well researched, and not every part of this research can be accounted for in this study.
+
+Firstly, when sampling a point, the sampling algorithm is actually capable of starting from any arbitrary location. The line ${\bm p} <- 0$ from algorithm \ref{alg_samp} can instead by a previously generated point, passed as a parameter, to be perturbed by the random walk. The algorithms in the literature tend to use the previously generated point as a starting point, thus providing a ``warm start" to the random walk. Preliminary experiments showed that this produced random numbers of lower quality than starting from $0$ every time.
+
+The literature assumes that, if $K \subseteq RB$, then $R \in O^{*}(\sqrt{n})$. If this is not the case, then it is fairly easy to transform space such that it is, for some predetermined constant factors hidden by the $O$ notation. In this study, we will ignore this by simply generating shapes for which $R = \sqrt{n}$ in every case. This transformation also includes a translation such that te centre of $K$'s mass is at the origin. This provides a useful technical tool to make the analysis easier, but is not necessary for the algorithms to be correct. Similarly, we neglect the step of adjusting the size of the shape such that the covariance matrix of its uniform distribution is the identity, though we will revisit this later for some of the statistical tests.
