@@ -1,9 +1,9 @@
 \section{Motivation and Goals}
 
-The estimation of the volume of a convex shape in $n$ dimensions, $K$ is a long standing problem. Exactly calculating the volume of an arbitrary convex polytope is known to be \#P-complete, %cite
+The estimation of the volume of a convex shape in $n$ dimensions, $K$ is a long standing problem. Exactly calculating the volume of an arbitrary convex polytope is known to be \#P-hard, %cite
  but it has been shown by many authors %cite
 that arbitrarily good estimates can be acquired by testing whether a polynomially bounded number of points fall within the shape. The order of this polynomial has been chipped away incrementally over many years until the most recent papers %cite simulated annealing and random walks
-have successfully bounded the number of oracle queries to be within $O^{*}(n^4)$ and $O^{*}(n^5)$ respectively, stating that this brings the methods within the realms of a parctical implementation.
+have successfully bounded the number of oracle queries to be within $O^{*}(n^4)$ and $O^{*}(n^5)$ respectively, stating that this brings the methods within the realms of a parctical implementation. Exact methods of volume computation exist and have been tested, but their scaling is measured in terms of the number of vertices and facets of the shape, not on the number of dimensions in which the shape exists. 
 
 Our problem will be as follows. We will be given an inclusion oracle for $K$ which, on input of some point $\bm{x}$, will return either $\top$ if $\bm{x} \in K$ or $\bot$ otherwise. We also have the guarantee that $K$ is contained within a ball of known radius $R$, and that $K$ contains the unit ball. These guarantees are necessary, else we find ourselves in a situation where we may never even find the shape. We wish to construct an algorithm which, given such an oracle and an error measure $\varepsilon$, will, with high probability, return a value $v$ satisfying
 
@@ -11,10 +11,14 @@ $$
 (1-\varepsilon)vol(K) \leqslant v \leqslant (1+\varepsilon)vol(K)
 $$
 
-In this study, we will test the various features of the $O^{*}(n^5)$ volume algorithm by implementing a version of it in ANSI C, using the theoretical bounds as a guide to estimate good values for relevant parameters, and finally compare its overall execution time to various exact methods of volume conmputation over various simplices. We will find that the theoretical upper bounds on most parameters are very loose indeed, and that in practice far smaller values are sufficient, resulting in significant savings on real-world execution time, however the assumption of a unit-time oracle proves impractical, and when more detailed information about the shape is available, an exact method is still usually faster.
+In this study, we will test the various features of the $O^{*}(n^5)$ volume algorithm by implementing a version of it in ANSI C, using various statistical methods to estimate good values for relevant parameters, and finally compare its overall execution time to various exact methods of volume computation over various simplices. We will find that the theoretical upper bounds on most parameters are very loose indeed, and that in practice far smaller values are sufficient, resulting in significant savings on real-world execution time, however the assumption of a unit-time oracle proves impractical, and when more detailed information about the shape is available, an exact method is still usually faster. The theoretical performance of these algorithms is given in terms of the number of oracle queries made, ignoring the practicalities of actually building such an oracle.
 
 \section{Preliminaries}
 \subsection{Notation}
+
+The quality of a volume estimation algorithm is usually measured using $O^{*}$ notation, which differs from $O$ notation in that poly-logarithmic factors and factors in terms of an accuracy parameter are suppressed. This has both benefits and drawbacks. The scaling of a poly-logarithmic factor is so small that we can justifiably neglect it for most exponents, and usually we do not scale the error parameter with the number of dimensions, however hiding this sort of information makes the actual practicalities of the algorithm harder to discern. An $O^{*}(n^4)$ algorithm may seem better than an $O^{*}(n^5)$, but due to hidden scaling with error parameters and logarithmic factors, may be slower in practice. $O^{*}$ notation is a useful tool, but is not a panacea.
+
+We will denote the volume of some $n$-dimensional shape, $K$, by $\vol_n(K)$. Where a shape may exist in any number of dimensions, we will use $\vol_n$ to denote the volume of the $n$-dimensional version of that shape. Where the number of dimensions does not vary throughout an equation, we will neglect the $n$.
 
 \subsection{Shapes}
 
@@ -26,7 +30,13 @@ $$
 
 Such a combination of points is known as a convex combination. More intuitively, we say that $K$ is convex if any straight line segment between any two points in $K$ lies entirely within $K$. $K$'s boundary does not ``bow inwards".
 
-We will denote by $B$ the unit ball, that is $B = \{x \in \arr^n \st ||x|| \leqslant 1\}$, and abuse notation slightly by donoting the ball of radius $R$ by $RB$. The ball of radius $RB$ is trivially the largest convex shape that will fit within the ball of radius $RB$.
+We will denote by $B$ the unit ball, that is $B = \{x \in \arr^n \st ||x|| \leqslant 1\}$, and abuse notation slightly by donoting the ball of radius $R$ by $RB$. The ball of radius $RB$ is trivially the largest convex shape that will fit within the ball of radius $RB$. Its volume is easily calculable:
+
+$$
+\vol_n(RB) = \frac{\pi^{\frac{n}{2}}}{\Gamma(\frac{n}{2}+1)}R^n
+$$
+
+Where $\pi \approxeq 3.14$ denotes the circle constant, and $\Gamma = \int^\infty_0 t^{z-1}e^{-t} dt$ is Euler's gamma function, computable in closed form for integers and half-integers.
 
 The convex hull of a set of points, denoted $h(P)$, is the set of points defined thus
 
@@ -36,11 +46,18 @@ $$
 
 Less formally, the convex hull of a set of points is the result of wrapping an elastic band around them and letting it snap tightly around them. All convex hulls are convex.
 
-We will define the n-dimensional ice cream of radius $R$, $RI$ as the convex hull of $B$ and the point $(R,0,0,...0)$. Figure \ref{fig_ice_cream} should make the logic behind this name reasonably clear. The n-dimensional ice cream is important for this study because it is the smallest possible convex shape which contains $B$ and is tightly contained within $RB$. It will represent a pathological case for several algorithms, however as the disjoint union of a capless ball and a n-dimensional cone, its volume, whilst non-trivial, is calculable. The details can be found in Appendix \ref{app_ice_cream}.
+We will define the n-dimensional ice cream of radius $R$, $RI$ as the convex hull of $B$ and the point $(R,0,0,...0)$. Figure \ref{fig_ice_cream} should make the logic behind this name reasonably clear. The n-dimensional ice cream is important for this study because it is the smallest possible convex shape which contains $B$ and is tightly contained within $RB$. It will represent a pathological case for our estimation algorithms, however as the disjoint union of a capless ball and an n-dimensional cone, its volume, whilst non-trivial, is calculable in terms of the volume of an n-ball. The details can be found in Appendix \ref{app_ice_cream}.
 
 $$
-vol(RI) = %Volume of ice cream goes here - cite http://docsdrive.com/pdfs/ansinet/ajms/2011/66-70.pdf
+\vol_n(RI) = \frac{1-h}{n} \vol_{n-1}(rB) + \vol_n(B) - \left(\frac{1}{2}\vol_n(rB) I_{\frac{2rh-h^2}{r^2}}\left(\frac{n+1}{2}, \frac{1}{2}\right)\right) %Cite http://docsdrive.com/pdfs/ansinet/ajms/2011/66-70.pdf
 $$
+Where $h = \frac{1}{R}$, $r = \sqrt{1-\frac{1}{R^2}}$ and $I_x(a,b)$ is the incomplete beta function, defined thus:
+
+$$
+I_x(a,b) = \frac{\int^x_0 t^{a-1}(1-t)^{b-1}dt}{\int^1_0 t^{a-1}(1-t)^{b-1} dt}
+$$
+
+This function is the CDF of the beta distribution, and is available in various statistical packages.
 
 \subsection{Markov Chains and Random Walks}
 
@@ -56,7 +73,45 @@ A random walk through a shape is a markov chain whose state space approximates t
 which has been shown both theoretically and in practice to rapidly approach its stationary distribution, requiring a very small number of steps to produce good randomness. For a walk in the interior of $K$, starting at $\bm{x}_0$, the Hit and Run walk selects a line uniformly at random passing through $\bm{x}_0$ and contained entirely within $K$, then moves to a point uniformly distributed along this line. The number of times this needs to be repeated before a point becomes uniformly distributed in $K$ depends on $n$, and this will be discussed in section \ref{sec_mix}
 
 Selecting the line through $\bm{x}_0$ can be accomplished by standard hyperspherical point picking %cite mathworld
-followed by a binary search. We sample $n$ independent standard normal random variables to pick a random point on the surface of the $n$-dimensional unit hypersphere, $\bm{u}$, and define the line $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in \arr \}$. Since we know that $K$ is contained within the ball of radius $R$, we know that $\bm{x}_0 + 2R\bm{u} \notin K$, and so can perform a bidirectional binary search to find $\overline{\lambda}$ and $\underline{\lambda}$ such that $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in [\underline{\lambda}, \overline{\lambda}] \}$ is tightly contained within $K$. Selecting a $U(\underline{\lambda}, \overline{\lambda})$ random variable will then let us move to a uniformly random point on this line.
+followed by a binary search. We sample $n$ independent standard normal random variables to pick a random point on the surface of the $n$-dimensional unit hypersphere, $\bm{u}$, and define the line $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in \arr \}$. Since we know that $K$ is contained within the ball of radius $R$, we know that $\bm{x}_0 + 2R\bm{u} \notin K$, and so can perform a bidirectional binary search to find $\overline{\lambda}$ and $\underline{\lambda}$ such that $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in [\underline{\lambda}, \overline{\lambda}] \}$ is tightly contained within $K$. Selecting a $U(\underline{\lambda}, \overline{\lambda})$ random variable will then let us move to a uniformly random point on this line. The algorithm can be described thus:
+
+\begin{algorithm}
+\SetAlgoLined
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+
+\caption{An Algorithm for Generating a Uniformly Distributed Random Point in a Convex Shape}\label{alg_vol}
+\Input{$\mathcal{O}_K$, an inclusion oracle for $K$, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, $n_s$, the number of steps to take before returning, and $\theta$, an accuracy parameter}
+\Output{$\bm p$, a point in $K$ randomly distributed to be near uniform on $K$}
+
+\Begin{
+	${\bm p} <- 0$ \\
+	\For{$i <- 1$ \KwTo $n_s$}{
+		${\bm \delta} <-$ random\_direction \\
+		$\overline{\lambda}' <- {\bm p} + 2R {\bm \delta}$ \\
+		$\overline{\lambda}  <- 0$ \\
+		$\underline{\lambda}' <- {\bm p} - 2R {\bm \delta}$ \\
+		$\underline{\lambda}  <- 0$ \\
+		\While{$\overline{\lambda}' - \overline{\lambda} > \theta$}{
+			\uIf{${\bm p} + \frac{\overline{\lambda} + \overline{\lambda}'}{2}{\bm \delta} \in K$}{
+				$\overline{\lambda}  <- \frac{\overline{\lambda} + \overline{\lambda}'}{2}$
+			}\Else{
+				$\overline{\lambda}' <- \frac{\overline{\lambda} + \overline{\lambda}'}{2}$
+			}
+		}
+		\While{$\underline{\lambda}' - \underline{\lambda} > \theta$}{
+			\uIf{${\bm p} + \frac{\underline{\lambda} + \underline{\lambda}'}{2}{\bm \delta} \in K$}{
+				$\underline{\lambda}  <- \frac{\underline{\lambda} + \underline{\lambda}'}{2}$
+			}\Else{
+				$\underline{\lambda}' <- \frac{\underline{\lambda} + \underline{\lambda}'}{2}$
+			}
+		}
+		$\lambda <-$uniform$(\underline{\lambda}, \overline{\lambda})$\\
+		${\bm p} <- {\bm p} + \lambda {\bm \delta}$
+	}
+	\KwRet $\bm p$
+}
+\end{algorithm}
 
 In the implementation, uniform random numbers are selected via the mersenne twister, and normally distributed random numbers are selected with the ziggurat algorithm. These two methods are known to generate high quality random numbers quickly.
 
@@ -73,19 +128,19 @@ To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 
 \SetKwInOut{Output}{output}
 
 \caption{An Algorithm for Estimating the Volume of a Convex Shape}\label{alg_vol}
-\Input{$\mathcal{O}_K$, an inclusion oracle for $K$, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, a number of points to use per thread, $n_p$ and an accuracy parameter for the sampling algorithm $\theta$}
+\Input{$\mathcal{O}_K$, an inclusion oracle for $K$, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, and $n_p$, a number of points to use per thread}
 \Output{$v$, an estimate of $vol(K)$}
 
 \Begin{
 	$n_s <- n \lceil \ln (R) \rceil$ \\
-	$v <-$vol$(B)$ \\
-	$\mathcal{O}_{K_0} <- \top$
+	$v <-\vol_n(B)$ \\
+	$K_0 <- B$
 	\For{$i <- 1$ \KwTo $n_s$}{
-		$\mathcal{O}_{K_i} <-$ make\_oracle $(e^i, \mathcal{O}_K)$ \\
+		$K_i <- e^\frac{i}{n}B \cap K)$ \\
 		$n_{in} <- 0$
 		\For{$j <- 1$ \KwTo $n_p$}{
-			$p <-$ generate\_point$(O_{K_i})$ \\
-			\If{$\mathcal{O}_{K_{i-1}}(p)$}{
+			$p <-$ generate\_point$(K_i)$ \\
+			\If{$p \in K_{i-1}$}{
 				$n_{in} <- n_{in} + 1$
 			}
 		}
