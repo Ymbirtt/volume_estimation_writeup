@@ -9,14 +9,38 @@ We shall judge the walk to be well-mixed if 1,000 independent points generated b
 
 We conclude from these tests that, for up to 8 dimensions, using $2^5$ steps produces adequately random points. Whilst there was one exception to this, namely the number of steps to sample from an ice cream where $n=3$, it is also true that a very large number of tests was performed, so it's likely that this one exception is just a statistical outlier.
 
-Given the difficulty of taking a hit and run step, this is still a relatively expensive random number generator, but nowhere near the theoretical upper bound of $10^10$. This is relieving, and we will use these 32 steps in the random walk for the following experiments.
+Given the difficulty of taking a hit and run step, this is still a relatively expensive random number generator, but nowhere near the theoretical upper bound of $10^{10}$. This is relieving, and we will use these 32 steps in the random walk for the following experiments.
 
 
 \section{Threads per stage}\label{sec_error}
 
 We will now see how the number of threads per phase influences the accuracy of an estimate. In the paper describing our particular estimation method, it is stated that, for an n-dimensional shape, in order to achieve an error of $\varepsilon$, we should use $400\frac{n\log n}{\varepsilon^2}$ threads per stage. This, again, is an upper bound, and we would like to show that it is loose. We shall vary the number of threads used per stage, and see how the distribution of estimates varies with this value. As before, we will use both the ice cream and the ball to respectively maximise and minimise the ratios between successive shapes. Our analysis here will be largely visual, since any returned value from this algorithm might be considered valid for a sufficiently large value of epsilon.
 
+In all cases the errors decrease fairly rapidly, with estimates being easier to acquire for the ball than for the ice cream. The ice cream is very much the pathological case here. These figures can be used to read off the minimum number of threads needed to get an estimate of a given quality, but it is interesting to note that, presumably due to numerical instability, it is impossible to attain an error of 0 in many cases, with estimates showing a clear tendency to converge towards slightly incorrect values. We also depict the greatest errors made on each shape in terms of apsolute error. Because of the vast number of graphs, figure \ref{fig_histograms} we will only show a few.
 
+\begin{figure}
+\centering
+\subfloat[Histograms for the ball estimates]{
+	\includegraphics[width = 0.4 \textwidth]{./images/6-dimensions_ball_3d.png}
+}
+\subfloat[Histograms for the ice cream estimates]{
+	\includegraphics[width = 0.4 \textwidth]{./images/6-dimensions_ice_cream_3d.png}
+} 
+\\
+
+\subfloat[The worst mistakes made in the ball estimates]{
+	\label{fig_2d_ball}
+	\includegraphics[width = 0.4 \textwidth]{./images/6-dimensions_ball_2d.pdf}
+}
+\subfloat[The worst mistakes made in the ice cream estimates]{
+	\includegraphics[width = 0.4 \textwidth]{./images/6-dimensions_ice_cream_2d.pdf}
+	\label{fig_2d_ice_cream}
+}
+\label{fig_histograms}
+\caption{Variance in errors for various shapes, measured in different ways}
+\end{figure}
+
+So, reading off from figures \ref{fig_2d_ice_cream} and \ref{fig_2d_ball}, in a 6-dimensional ice cream our estimates all become correct for $\varepsilon > 0.1$ for any number of threads greater than $2^11 = 2,048$. For a 6-dimensional ball to within an error of $0.1$, we need more like $2^13 = 8,192$. The papers suggest that at least $400\frac{n\log n}{\varepsilon^2} \approxeq 620,000$ threads are necessary for each stage. Once again, the upper bound is very loose indeed.
 
 \section{Computation Time for Convex Shapes}\label{sec_time}
 
