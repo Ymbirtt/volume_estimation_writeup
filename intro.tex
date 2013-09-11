@@ -11,14 +11,14 @@ $$
 (1-\varepsilon)vol(K) \leqslant v \leqslant (1+\varepsilon)vol(K)
 $$
 
-In this study, we will test the various features of the $O^{*}(n^5)$ volume algorithm by implementing a version of it in ANSI C, using various statistical methods to estimate good values for relevant parameters, and finally compare its overall execution time to various exact methods of volume computation over various simplices. We will find that the theoretical upper bounds on most parameters are very loose indeed, and that in practice far smaller values are sufficient, resulting in significant savings on real-world execution time, however the assumption of a unit-time oracle proves impractical, and when more detailed information about the shape is available, an exact method is still usually faster. The theoretical performance of these algorithms is given in terms of the number of oracle queries made, ignoring the practicalities of actually building such an oracle.
+In this study, we will test the various features of the $O^{*}(n^5)$ volume algorithm by implementing a version of it in ANSI C, using various statistical methods to estimate good values for relevant parameters, and finally compare its overall execution time to various exact methods of volume computation over various random shapes. We will find that the theoretical upper bounds on most parameters are very loose indeed, and that in practice far smaller values are sufficient, resulting in significant savings on real-world execution time, however the assumption of a unit-time oracle proves impractical, and when more detailed information about the shape is available, an exact method is still usually faster. The theoretical performance of these algorithms is given in terms of the number of oracle queries made, ignoring the practicalities of actually building such an oracle.
 
 \section{Preliminaries}
 \subsection{Notation}
 
 The quality of a volume estimation algorithm is usually measured using $O^{*}$ notation, which differs from $O$ notation in that poly-logarithmic factors and factors in terms of an accuracy parameter are suppressed. This has both benefits and drawbacks. The scaling of a poly-logarithmic factor is so small that we can justifiably neglect it for most exponents, and usually we do not scale the error parameter with the number of dimensions, however hiding this sort of information makes the actual practicalities of the algorithm harder to discern. An $O^{*}(n^4)$ algorithm may seem better than an $O^{*}(n^5)$, but due to hidden scaling with error parameters and logarithmic factors, may be slower in practice. $O^{*}$ notation is a useful tool, but is not a panacea.
 
-We will denote the volume of some $n$-dimensional shape, $K$, by $\vol_n(K)$. Where a shape may exist in any number of dimensions, we will use $\vol_n$ to denote the volume of the $n$-dimensional version of that shape. Where the number of dimensions does not vary throughout an equation, we will neglect the $n$.
+We will denote the volume of some $n$-dimensional shape, $K$, by $\vol_n(K)$. Where a shape may exist in any number of dimensions, we will use $\vol_n$ to denote the volume of the $n$-dimensional version of that shape. Where the number of dimensions does not vary throughout an equation, we will neglect the $n$. $n$-dimensional vectors will be indexed from $1$ to $n$, with all vectors written in bold font, as in ${\bm x} = (x_1, x_2, ..., x_n)$.
 
 \subsection{Shapes}
 
@@ -49,7 +49,7 @@ Less formally, the convex hull of a set of points is the result of wrapping an e
 We will define the n-dimensional ice cream of radius $R$, $RI$ as the convex hull of $B$ and the point $(R,0,0,...0)$. Figure \ref{fig_ice_cream} should make the logic behind this name reasonably clear. The n-dimensional ice cream is important for this study because it is the smallest possible convex shape which contains $B$ and is tightly contained within $RB$. It will represent a pathological case for our estimation algorithms, however as the disjoint union of a capless ball and an n-dimensional cone, its volume, whilst non-trivial, is calculable in terms of the volume of an n-ball. The details can be found in Appendix \ref{app_ice_cream}.
 
 $$
-\vol_n(RI) = \frac{1-h}{n} \vol_{n-1}(rB) + \vol_n(B) - \left(\frac{1}{2}\vol_n(rB) I_{\frac{2rh-h^2}{r^2}}\left(\frac{n+1}{2}, \frac{1}{2}\right)\right) %Cite http://docsdrive.com/pdfs/ansinet/ajms/2011/66-70.pdf
+\vol_n(RI) = \frac{R-h}{n} \vol_{n-1}(rB) + \vol_n(B) - \left(\frac{1}{2}\vol_n(rB) I_{\frac{2rh-h^2}{r^2}}\left(\frac{n+1}{2}, \frac{1}{2}\right)\right) %Cite http://docsdrive.com/pdfs/ansinet/ajms/2011/66-70.pdf
 $$
 Where $h = \frac{1}{R}$, $r = \sqrt{1-\frac{1}{R^2}}$ and $I_x(a,b)$ is the incomplete beta function, defined thus:
 
@@ -58,6 +58,12 @@ I_x(a,b) = \frac{\int^x_0 t^{a-1}(1-t)^{b-1}dt}{\int^1_0 t^{a-1}(1-t)^{b-1} dt}
 $$
 
 This function is the CDF of the beta distribution, and is available in various statistical packages.
+\begin{figure}
+\centering
+\includegraphics{./images/ice_cream_shaded.pdf}
+\caption{A 2-dimensional ice-cream. The shaded part is the wafer, and the unshaded part the scoop}
+\label{fig_ice_cream}
+\end{figure}
 
 \subsection{Markov Chains and Random Walks}
 
@@ -73,7 +79,7 @@ A random walk through a shape is a markov chain whose state space approximates t
 which has been shown both theoretically and in practice to rapidly approach its stationary distribution, requiring a very small number of steps to produce good randomness. For a walk in the interior of $K$, starting at $\bm{x}_0$, the Hit and Run walk selects a line uniformly at random passing through $\bm{x}_0$ and contained entirely within $K$, then moves to a point uniformly distributed along this line. The number of times this needs to be repeated before a point becomes uniformly distributed in $K$ depends on $n$, and this will be discussed in section \ref{sec_mix}
 
 Selecting the line through $\bm{x}_0$ can be accomplished by standard hyperspherical point picking %cite mathworld
-followed by a binary search. We sample $n$ independent standard normal random variables to pick a random point on the surface of the $n$-dimensional unit hypersphere, $\bm{u}$, and define the line $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in \arr \}$. Since we know that $K$ is contained within the ball of radius $R$, we know that $\bm{x}_0 + 2R\bm{u} \notin K$, and so can perform a bidirectional binary search to find $\overline{\lambda}$ and $\underline{\lambda}$ such that $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in [\underline{\lambda}, \overline{\lambda}] \}$ is tightly contained within $K$. Selecting a $U(\underline{\lambda}, \overline{\lambda})$ random variable will then let us move to a uniformly random point on this line. Algorithm \ref{alg_samp} specifies this process.
+followed by a binary search. We sample $n$ independent standard normal random variables to pick a random point on the surface of the $n$-dimensional unit hypersphere, $\bm{u}$, and define the line $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in \arr \}$. Since we know that $K$ is contained within the ball of radius $R$, we know that $\bm{x}_0 + 2R\bm{u} \notin K$, and so can perform a bidirectional binary search to find $\overline{\lambda}$ and $\underline{\lambda}$ such that $\{\bm{x} | \bm{x} = \bm{x}_0 + \lambda \bm{u}, \lambda \in [\underline{\lambda}, \overline{\lambda}] \}$ is tightly contained within $K$. Selecting a $U(\underline{\lambda}, \overline{\lambda})$ random variable will then let us move to a uniformly random point on this line. Algorithm \ref{alg_samp} specifies this process. Since $R \in O(\sqrt{n})$, the two while loops form a binary search on a set of bins in $O(\log(\frac{2R}{\theta})) = O^{*}(1)$ time. 
 
 \begin{algorithm}
 \SetAlgoLined
@@ -81,7 +87,7 @@ followed by a binary search. We sample $n$ independent standard normal random va
 \SetKwInOut{Output}{output}
 
 \caption{An Algorithm for Generating a Uniformly Distributed Random Point in a Convex Shape}\label{alg_samp}
-\Input{$\mathcal{O}_K$, an inclusion oracle for $K$, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, $n_s$, the number of steps to take before returning, and $\theta$, an accuracy parameter}
+\Input{$K$, a convex shape for which a membership oracle can be implemented easily, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, $n_s$, the number of steps to take before returning, and $\theta$, an accuracy parameter}
 \Output{$\bm p$, a point in $K$ randomly distributed to be near uniform on $K$}
 
 \Begin{
@@ -118,9 +124,15 @@ In the implementation, uniform random numbers are selected via the mersenne twis
 \subsection{The Volume Estimation Algorithm}
 
 The algorithm we will use follows %lovasz paper
-with three differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which previous experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$.
+with a few minor differences differences. Rather than generating random points using the ball walk, we generate points with Hit and Run, which previous experimental results show mixes significantly faster than the ball walk. Rather than using $2$ as the base for our exponents, we use $e$.
 
-To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that the volume of $K_0$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{vol(K_{i+1})}{vol(K_i)}$ easily. For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, and ratio of volumes can be estimated as the fraction of uniformly generated random points in $K_i$ that fall into $K_{i-1}$. Algorithm \ref{alg_vol} specifies this in pseudocode.
+To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 \subseteq K_1 \subseteq ... \subseteq K_p$, such that volume $\vol (K_0)$ can be computed easily, $K_p = K$, and we can estimate the ratios $\frac{\vol(K_{i+1})}{\vol(K_i)}$ easily. Given good estimates for all of these values, we have that
+
+$$
+\vol(K) = \vol(K_0) \frac{\vol(K_1)}{\vol(K_0)} \frac{\vol(K_2)}{\vol(K_1)} \frac{\vol(K_3)}{\vol(K_2)} \, ... \, \frac{\vol(K_p)}{\vol(K_{p-1})}
+$$
+
+For our algorithm, we will chose the shapes $K_i = (e^{i/n}B) \cap K$ for $i = 0, ..., n \log (R)$. Since $B \subseteq K \subseteq RB$, this satisfies our first two conditions. We can then estimate the ratios by sampling uniformly at random from $K_i$ and counting the number of points which fall into $K_{i-1}$. Modifying an oracle that samples from $K$ such that it samples from $K_i$ is fairly easy, given ${\bm x}$ we return $\top$ iff $||{\bm x}||_2 < e^{i/n}$ and ${\bm x} \in K$. The ratio of volumes can be estimated as the fraction of uniformly generated random points in $K_i$ that fall into $K_{i-1}$. Algorithm \ref{alg_vol} specifies this in pseudocode.
 
 \begin{algorithm}
 \SetAlgoLined
@@ -128,11 +140,11 @@ To estimate the volume of some shape, $K$, we choose a sequence of shapes, $K_0 
 \SetKwInOut{Output}{output}
 
 \caption{An Algorithm for Estimating the Volume of a Convex Shape}\label{alg_vol}
-\Input{$\mathcal{O}_K$, an inclusion oracle for $K$, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, and $n_p$, a number of points to use per thread}
+\Input{$K$, a convex shape for which a membership oracle can be implemented easily, $n$, the number of dimensions in which $K$ exists, $R$, the radius of $K$, and $n_p$, a number of points to use per thread}
 \Output{$v$, an estimate of $vol(K)$}
 
 \Begin{
-	$n_s <- n \lceil \ln (R) \rceil$ \\
+	$n_s <- \lfloor n \ln (R) + 1 \rfloor$ \\
 	$v <-\vol_n(B)$ \\
 	$K_0 <- B$
 	\For{$i <- 1$ \KwTo $n_s$}{
@@ -156,4 +168,7 @@ This field is very well researched, and not every part of this research can be a
 
 Firstly, when sampling a point, the sampling algorithm is actually capable of starting from any arbitrary location. The line ${\bm p} <- 0$ from algorithm \ref{alg_samp} can instead by a previously generated point, passed as a parameter, to be perturbed by the random walk. The algorithms in the literature tend to use the previously generated point as a starting point, thus providing a ``warm start" to the random walk. Preliminary experiments showed that this produced random numbers of lower quality than starting from $0$ every time.
 
-The literature assumes that, if $K \subseteq RB$, then $R \in O^{*}(\sqrt{n})$. If this is not the case, then it is fairly easy to transform space such that it is, for some predetermined constant factors hidden by the $O$ notation. In this study, we will ignore this by simply generating shapes for which $R = \sqrt{n}$ in every case. This transformation also includes a translation such that te centre of $K$'s mass is at the origin. This provides a useful technical tool to make the analysis easier, but is not necessary for the algorithms to be correct. Similarly, we neglect the step of adjusting the size of the shape such that the covariance matrix of its uniform distribution is the identity, though we will revisit this later for some of the statistical tests.
+The literature assumes that, if $K \subseteq RB$, then $R \in O^{*}(\sqrt{n})$. If this is not the case, then it is fairly easy to transform space such that it is, for some predetermined constant factors hidden by the $O$ notation. In this study, we will ignore this by simply generating shapes for which $R = \sqrt{n}$ in every case. This transformation also includes a translation such that te centre of $K$'s mass is at the origin. This provides a useful technical tool to make the analysis easier, but is not necessary for the algorithms to be correct. Similarly, we neglect the step of adjusting the size of the shape such that the covariance matrix of its uniform distribution is the identity.
+
+A much faster algorithm than the one used does exist at this time. %cite simulated annealing
+This algorithm claims an asymptotic complexity of $O^{*}(n^4)$, but is significantly harder to implement. In the interest of getting usable results out in a reasonable timeframe, this paper has not been used, however some of the techniques within it, such as the Hit and Run walk, have been adapted for this study.
