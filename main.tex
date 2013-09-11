@@ -32,11 +32,18 @@
 \usepackage{lineno}
 \usepackage{bm}
 
+\usepackage[annatar]{tengwarscript}
+
 \newcommand{\arr}{\mathbb{R}}
 \newcommand{\st}{\;\; st \;\;}
 \newcommand{\nat}{\mathbb{N}}
 \newcommand{\pr}{\mathbb{P}}
 \newcommand{\vol}{\mbox{vol}}
+\newcommand{\tengm}{\mbox{\Tmalta}}
+%\newcommand{\tengm}{m}
+
+
+\newtheorem{proposition}{Proposition}
 
 \begin{document}
 
@@ -53,5 +60,11 @@
 \chapter{Experiments}
 
 \input{./experiments.tex}
+
+\appendix
+\chapter{The Ice Cream} \label{app_ice_cream}
+
+\input{./ice_cream.tex}
+
 
 \end{document}
