@@ -1,21 +1,16 @@
-In this appendix, we will show that the cross polytope, $X = \{{\bm x} | \sum^n_{i=1}|x_i| \leqslant R\}$, always contains the unit ball, $B$, for $R \geqslant \sqrt{n}$. That is, $R \geqslant \sqrt{n} => B \subseteq X$. Let $||{\bm x}||_p$ denote the $p$-norm of ${\bm x}$, defined:
+In this appendix, we will show that the cross polytope, $X = \{\bm{x} | \sum^n_{i=1}|x_i| \leqslant R\}$, always contains the unit ball, $B$, for $R \geqslant \sqrt{n}$. That is, $R \geqslant \sqrt{n} => B \subseteq X$. Let $||\bm{x}||_p$ denote the $p$-norm of ${\bm x}$, defined:
 
 $$
-||{\bm x}||_p = \sqrt[p]{\sum^n_{i=1} |x_i|^p}
+||\bm{x}||_p = \sqrt[p]{\sum^n_{i=1} |x_i|^p}
 $$
 
-So $X$ is the set of points satisfying $||{\bm x}||_1 \leqslant R$ and $B$ is the set of points satisfying $||{\bm x}||_2 \leqslant 1$.
-
-Let ${\bm x}, {\bm y} \in \arr^n$. The Cauchy-Schwarz inequality states that:
+So $X$ is the set of points satisfying $||\bm{x}||_1 \leqslant R$ and $B$ is the set of points satisfying $||\bm{x}||_2 \leqslant 1$. Let ${\bm x}, {\bm y} \in \arr^n$. The Cauchy-Schwarz inequality states that:
 
 $$
 \left(\sum^n_{i=1} x_i y_i\right)^2 \leqslant \sum^n_{i=1} x_i^2 \sum^n_{i=1} y_i^2 
 $$
-
-By choosing $y = (1,1,...,1)$ , for any ${\bm x} \in \arr^n$
-
+By choosing $y = (1,1,...,1)$, we have that for any ${\bm x} \in \arr^n$
 $$
 \left(\sum^n_{i=1} |x_i| \right)^2 \leqslant n \sum^n_{i=1} |x_i|^2
 $$
-
-Taking square roots of both sides, we have that $||{\bm x}||_1 \leqslant \sqrt{n} ||{\bm x} ||_2$. Now, ${\bm x} \in B$ iff $||{\bm x}||_2 \leqslant 1$, which implies that $||{\bm x}||_1 \leqslant \sqrt{n}$, so ${\bm x} \in X$
+Taking square roots of both sides, we have that $||\bm{x}||_1 \leqslant \sqrt{n} ||\bm{x} ||_2$. Now, ${\bm x} \in B$ iff $||{\bm x}||_2 \leqslant 1$, which implies that $||{\bm x}||_1 \leqslant \sqrt{n}$, so ${\bm x} \in X$. $x \in X => x \in B$, as required.

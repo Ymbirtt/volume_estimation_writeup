@@ -1,4 +1,4 @@
-The $n$-dimensional ice cream of radius $R>1$, denoted $RI$ is the convex hull of the unit ball and the point $(R,0,0...,0)$. In this section, we will simply prove that its volume is
+The $n$-dimensional ice cream of radius $R>1$, denoted $RI$ is the convex hull of the unit ball and the point $(R,0,0...,0)$. In this section, we will simply argue that its volume is
 
 $$
 \vol_n(RI) = \frac{R-h}{n} \vol_{n-1}(rB) + \vol_n(B) - \left(\frac{1}{2}\vol_n(rB) I_{\frac{2rh-h^2}{r^2}}\left(\frac{n+1}{2}, \frac{1}{2}\right)\right)
@@ -11,18 +11,15 @@ I_x(a,b) = \frac{\int^x_0 t^{a-1}(1-t)^{b-1}dt}{\int^1_0 t^{a-1}(1-t)^{b-1} dt}
 $$
 
 We will show that the shape can be written as the union of two disjoint sets. Let
-
 $$
-S = B \cap \left\{{\bm x} \in \arr^n | x_1 \leqslant \frac{1}{R}\right\}
+S = B \cap \left\{\bm{x} \in \arr^n | x_1 \leqslant \frac{1}{R}\right\}
 $$
-
 And
-
 $$
-W = \left\{{\bm x} + \left(\frac{1}{R}, 0, ..., 0\right) | x_1 > 0 \; \wedge \; \sum^{n}_{i=2} x_i^2 < \left(\frac{\sqrt{1-R^{-2}}}{R-R^{-1}} x_1\right)^2 \right\}
+W = \left\{\bm{x} + \left(\frac{1}{R}, 0, ..., 0\right) | x_1 > 0 \; \wedge \; \sum^{n}_{i=2} x_i^2 < \left(\frac{\sqrt{1-R^{-2}}}{R-R^{-1}} x_1\right)^2 \right\}
 $$
 
-We will call $S$ the scoop, and is the spherical part of the ice cream near the origin, and $W$ the wafer, the conical part nearer to the point $(R,...,0)$. These two shapes are clearly disjoint, so the volume of the ice cream is the sum of the volumes of the cone and the wafer. We will show that these shapes partition the ice cream by showing that any line tangent to the unit ball through $(R,0,...,0)$ touches the ball at a point whose first coordinate is $\frac{1}{R}$.  The set of points touching the surface of an $n$-ball whose first coordinate is $\frac{1}{R}$ is an $(n-1)$-ball of radius $\sqrt{1-R^{-2}}$, and the distance from this surface to $(R,0,...,0)$ is $1-\frac{1}{R}$. The convex hull of points on an $n-1$ dimensional surface with a point normal to the surface is an $n$-dimensional hypercone. This hypercone is the wafer, the remainder is the scoop. Most of this will manifest as simple but non-obvious geometry, so it is worth describing fully.
+We will call $S$ the scoop, and is the spherical part of the ice cream near the origin, and $W$ the wafer, the conical part nearer to the point $(R,...,0)$. These two shapes are clearly disjoint, so the volume of the ice cream is the sum of the volumes of the scoop and the wafer. We will show that these shapes partition the ice cream by showing that any line tangent to the unit ball through $(R,0,...,0)$ touches the ball at a point whose first coordinate is $\frac{1}{R}$.  The set of points touching the surface of an $n$-ball whose first coordinate is $\frac{1}{R}$ is an $(n-1)$-ball of radius $\sqrt{1-R^{-2}}$, and the distance from this surface to $(R,0,...,0)$ is $1-\frac{1}{R}$. The convex hull of points on an $n-1$ dimensional surface with a point normal to the surface is an $n$-dimensional hypercone. This hypercone is the wafer, the remainder is the scoop. Most of this will manifest as simple but non-obvious geometry, so it is worth describing fully.
 
 \begin{proposition}
 A line tangent to the unit $n$-ball that passes through $(R,0,...,0)$ intersects the surface of the $n$-ball at a point whose first coordinate is $\frac{1}{R}$ at a distance $\sqrt{1-\frac{1}{R^2}}$ from the line from the origin to $(R,0,...,0)$

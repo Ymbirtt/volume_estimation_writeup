@@ -1,30 +1,26 @@
-The convex hull algorithms used all select $2n$ fixed vertices whose convex hull is known to contain the unit ball. This is required, since all our shapes must contain most of the unit ball for the volume estimation algorithm to make sense. It is interesting to discuss what might have happened if we did not include these fixed vertices. What if we had simply selected $v$ vertices, ${\bm x}_1, ..., {\bm x}_v$ on the surface of the origin-centred ball of radius $R$? Can we test that these random points' convex hull contains the unit ball, and what is the probability of this test succeeding?
+The algorithm for generating a convex shape selects $2n$ fixed vertices whose convex hull is known to contain the unit ball. This is required, since all our shapes must contain most of the unit ball for the volume estimation algorithm to make sense. It is interesting to discuss what might have happened if we did not include these fixed vertices. What if we had simply selected $v$ vertices, ${\bm x}_1, ..., {\bm x}_v$ on the surface of the origin-centred ball of radius $R$? Can we test that these random points' convex hull contains the unit ball, and what is the probability of such a test succeeding?
 
 \begin{proposition}
 The problem of determining whether the convex hull of a set of vertices contains the unit ball is NP-hard in either direction, assuming NP $\neq$ co-NP.
 \end{proposition}
 
-It's fairly easy to see that showing the ball is not within the hull is in NP. Given our set of points, I can produce a polynomial certificate to prove that their hull does not contain the unit ball by providing a point $\bm p$ on the surface of the unit ball that is not contained within their hull. We can then check that $||{\bm p}|| = 1$ and that the convex hull of ${\bm x}_1, ..., {\bm x}_v$ does not contain $\bm p$ by standard linear programming. If this fails, the convex hull cannot contain the unit ball.
+Note that we cannot simply perform facet enumeration on each of our vertices and check that the distance from the origin to the hyperplane representing each facet is less than one. Recall from appendix \ref{app_cyclic_polytope} that, even with a linear number of vertices, we can construct a shape with an exponential number of facets.
 
-$\bm p$ exists if and only if there exists some separating hyperplane such that ${\bm x}_1, ..., {\bm x}_v$ and the point $(0,0,...,0)$ lie on the same side of the hyperplane, and the distance from the origin to the hyperplane is less than one. If this separating hyperplane exists, then we know that the convex hull of ${\bm x}_1, ..., {\bm x}_v$ must lie on  one side of the hyperplane, and there is a point $\bm p$ on the other side of the hyperplane with $||{\bm p}|| = 1$, which must lie outside of the convex hull. The problem of determining whether a convex hull contains the unit ball reduces to the problem of finding a separating hyperplane of distance less than 1 from the origin.
+It's fairly easy to see that showing the ball is not within the hull is in NP. Given our set of points, I can produce a polynomial certificate to prove that their hull does not contain the unit ball by providing a point $\bm p$ on the surface of the unit ball that is not contained within their hull. We can then check that $||\bm{p}|| = 1$ and that the convex hull of ${\bm x}_1, ..., {\bm x}_v$ does not contain $\bm p$ by standard linear programming. If this fails, the convex hull cannot contain the unit ball.
 
-A plane can be defined as the set of points $\{ {\bm x} \in \arr ^n | \sum^n_{i=1} a_i x_i = 1\}$, for some vector ${\bm a} \in \arr ^n$. The distance from this plane to the origin is $\frac{1}{||{\bm a}||}$, and the two sides of the hyperplane are the points such that $\{ {\bm x} \in \arr ^n | \sum^n_{i=1} a_i x_i > 1 \}$ and $\{ {\bm x} \in \arr ^n | \sum^n_{i=1} a_i x_i < 1 \}$. The notions of ``above" and ``below" are arbitrary, since we can replace $\bm a$ with $- \bm a$ to switch these two sets over. We can state this separating hyperplane problem as finding a point ${\bm a} \in \arr^n$ such that
+$\bm p$ exists if and only if there exists some separating hyperplane tangent to the surface of an origin-centred ball such that ${\bm x}_1, ..., {\bm x}_v$ and the point $(0,0,...,0)$ lie on the same side of the hyperplane, and the distance from the origin to the hyperplane is less than one. If this separating hyperplane exists, then we know that the convex hull of ${\bm x}_1, ..., {\bm x}_v$ must lie on  one side of the hyperplane, and there is a point $\bm p$ on the other side of the hyperplane with $||\bm {p}|| = 1$, which must lie outside of the convex hull. Conversely, if every such hyperplane must be further from the origin than 1, then any point $\bm p$ outside this hull must satisfy $||\bm{p}||>1$. The problem of determining whether a convex hull contains the unit ball reduces to the problem of finding a separating hyperplane of distance less than 1 from the origin.
 
+A plane can be defined as the set of points $\{ {\bm x} \in \arr ^n | \sum^n_{i=1} a_i x_i = 1\}$, for some vector ${\bm a} \in \arr ^n$. The distance from this plane to the origin is $\frac{1}{||{\bm a}||}$, and the two sides of the hyperplane are the sets $\{ {\bm x} \in \arr ^n | \sum^n_{i=1} a_i x_i > 1 \}$ and $\{ {\bm x} \in \arr ^n | \sum^n_{i=1} a_i x_i < 1 \}$. The notions of ``above" and ``below" are arbitrary, since we can replace $\bm a$ with $-\bm{a}$ to switch these two sets over. We can state this separating hyperplane problem as finding a point ${\bm a} \in \arr^n$ such that
 \begin{align*}
-\forall i \in \{1, ..., v\}\;\; {\bm a} \cdot {\bm x}_i &\leqslant 1 \\
+\forall i \in \{1, ..., v\} \; \; {\bm a} \cdot {\bm x}_i &\leqslant 1 \\
 ||{\bm a}|| &> 1
 \end{align*}
-
 This problem then reduces to solving the following quadratic programming problem:
-
 \begin{align*}
 \mbox{Minimise: }& f({\bm a}) = {\bm a}^T (-I) {\bm a} \\
 \mbox{Subject to: }& i \in \{1, ..., v\} {\bm a} \cdot {\bm x}_i \leqslant 1 
 \end{align*}
-
-Where $I$ is the identity matrix and ${\bm a}^T$ is the transpose of ${\bm a}$ -- ${\bm a}$ written as a row vector. $-I$ has at least one negative eigenvalue and so, from the results of a didactically-named paper by Pardalos and Vavasis\cite{Pardalos91}, solving this problem is NP-hard. The forward problem is NP-hard, and the reverse problem is in NP. Therefore, assuming NP $\neq$ co-NP, both the forward and reverse problems are NP-hard.
-
-Note that we cannot simply perform facet enumeration on each of our vertices and check that the distance from the origin to the hyperplane representing each facet is less than one. Recall from appendix \ref{app_cyclic_polytope} that, even with a linear number of vertices, we can construct a shape with an exponential number of facets.
+Where $I$ is the identity matrix and ${\bm a}^T$ is the transpose of ${\bm a}$ -- ${\bm a}$ written as a row vector. $-I$ has at least one negative eigenvalue and so, from the results of a didactically-named paper by Pardalos and Vavasis\cite{Pardalos91}, solving this problem is NP-Hard. The forward problem is NP-hard, and the reverse problem is in NP. Therefore, assuming NP $\neq$ co-NP, both the forward and reverse problems are NP-hard.
 
 This means that there is no efficient way to test whether or not the points we have chosen contain the unit ball.
 
@@ -32,12 +28,12 @@ This means that there is no efficient way to test whether or not the points we h
 The probability that the origin is contained within the convex hull of $v$ vertices chosen uniformly at random from the surface of an origin-centred ball is no more than $\frac{1}{2}$ when $v = 2n$.
 \end{proposition}
 
-J. G. Wendel evaluated the probability that all points on an origin-centred ball lie on the same hemisphere. This condition is equivalent to the origin being containined within their convex hull. The probability $p_{n,v}$, defined
+J. G. Wendel\cite{Wendel62} evaluated the probability that a set of $v$ vertices selected uniformly on the surface of an $n$-ball all lie on the same hemisphere. This condition is equivalent to the origin being containined within their convex hull. This probability, $p_{n,v}$, is defined
 
 $$
 p_{n,v} = 2^{-v+1} \sum_{k=0}^{n-1} {{v-1} \choose k}
 $$
 
-The sum of the elements of the $v-1^{th}$ row of Pascal's triangle is $2^{v-1}$. If we choose $v = 2n$, then $v-1$ is odd, and the $v-1^{th}$ row has $v$ entries. Because the rows are symmetric, summing up the first $n-1$ entries of the $v-1^{th}$ row gives us a value no greater than $2^{v-2} = 2^{2n-2}$, so $p_{n, 2n} \leqslant 2^{-2n+1} 2^{2n-2} = \frac{1}{2}$.
+The sum of the elements of the $v-1^{th}$ row of Pascal's triangle is $2^{v-1}$\cite{mathworld_pascal}. If we choose $v = 2n$, then $v-1$ is odd, and the $v-1^{th}$ row has $v$ entries. Because the rows are symmetric, summing up the first $n-1$ entries of the $v-1^{th}$ row gives us a value no greater than $2^{v-2} = 2^{2n-2}$, so $p_{n, 2n} \leqslant 2^{2n+1} 2^{2n-2} = \frac{1}{2}$.
 
-If the hull contains the unit ball, it must also contain the origin, so the probability that the hull contains the unit ball is bounded above by the probability that it contains the origin. We need more than $2n$ points to ensure that the hull contains the origin with probability greater than $\frac{1}{2}$, and testing whether the hull contains the ball would be very difficult indeed, so we may as well choose $2n$ points to begin with which we know will contain the unit ball.
+If the hull contains the unit ball, it must also contain the origin, so the probability that the hull contains the unit ball is bounded above by the probability that it contains the origin. We need more than $2n$ points to ensure that the hull contains the origin with probability greater than $\frac{1}{2}$, so we may as well choose $2n$ points to begin with which we know will contain the unit ball.
