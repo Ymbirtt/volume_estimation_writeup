@@ -42,14 +42,14 @@ We also depict the greatest errors made on each shape in terms of apsolute error
 
 %Plot minimum number of threads needed for greatest absolute error to drop below 0.2?
 
-So, reading off from figures \ref{fig_2d_ice_cream} and \ref{fig_2d_ball}, in a 6-dimensional ice cream our estimates all become correct for $\varepsilon > 0.1$ for any number of threads greater than $2^11 = 2,048$. For a 6-dimensional ball to within an error of $0.1$, we need more like $2^{13} = 8,192$. The papers suggest that at least $400\frac{n\log n}{\varepsilon^2} \approxeq 620,000$ threads are necessary for each stage. Once again, the upper bound is very loose indeed. In all cases, the error drops below $0.2$ for $2^{13}$ threads per stage.
+So, reading off from figures \ref{fig_2d_ice_cream} and \ref{fig_2d_ball}, in a 6-dimensional ice cream our estimates all become correct for $\varepsilon > 0.1$ for any number of threads greater than $2^11 = 2,048$. For a 6-dimensional ball to within an error of $0.1$, we need more like $2^{13} = 8,192$. In all cases, the error drops below $0.2$ for $2^{13}$ threads per stage. The papers suggest that at least $400\frac{n\log n}{\varepsilon^2} \approxeq 620,000$ threads are necessary for each stage. Once again, the upper bound is very loose indeed.
 
 \section{Computation Time for Convex Shapes}\label{sec_time}
 
 It's now time to test the practicalities of this algorithm on a series of convex shape, against already established methods of exact volume computation. The code used for comparison is the same as that used in \cite{Bueler98}
 and was run over a series of randomly generated convex shapes. Each shape is the convex hull of the box $[-1,1]^n$, and some variable number of points on the ball of radius $\sqrt n$. We will randomly generate series of shapes in each dimension, increasing the number of points on the hull, and seeing how this affects the time for a volume estimation to complete using the values found above by experimentation
 
-All experiments were conducted on the same hardware and in the same operating system, using the same time metric. The processor is an Intel i5-2500k in a Gigabyte Z68AP-D3 motherboard, connected to 8 GiB of 1,600 MHz dual-channel DDR3 RAM. The programs were both compiled onto a 64-bit install of Ubuntu 12.04 virtualised by Oracle VM Virtualbox with access to 2GiB of RAM. Each time is measured in elapsed clock cycles divided by the number of clocks per second. Using this processor time removes the possibility of error due to other running processes. Neither program is designed to exploit any more than a single processor core, since this would require extensive modification of the code from \cite{Bueler98}.
+All experiments were conducted on the same hardware and in the same operating system, using the same time metric. The processor is an Intel i5-2500k in a Gigabyte Z68AP-D3 motherboard, connected to 8 GiB of 1,600 MHz dual-channel DDR3 RAM. The programs were both compiled onto a 64-bit install of Ubuntu 12.04 virtualised by Oracle VM Virtualbox with access to 2GiB of RAM. Each time is measured in elapsed clock cycles divided by the number of clocks per second. Using this processor time removes the possibility of error due to other running processes The actual wall-clock time is significantly longer, but the listed times ignore the time spent by the OS performing other processes, as well as the overhead incurred for virtualisation. Neither program is designed to exploit any more than a single processor core, since this would require extensive modification of the code from \cite{Bueler98}.
 
 Initially, the oracle was implemented with a linear programming solver. A point ${\bm p}$ lies within the convex hull of a set of $v$ vertices $\{{\bm x}^1, {\bm x}^2, {\bm x}^3, ..., {\bm x}^v\}$ iff there exists a vector ${\bm \lambda}$ such that
 
@@ -65,6 +65,64 @@ This defines the feasible region of an LP problem, which an LP solver can then i
 
 This particular method of representing a polytope is known as vertex representation, or v-representation. It is also possible to represent a polytope as two sets of halfspaces. A point lies in a convex polytope iff it is below some set of halfspaces and above some other set of halfspaces. Each halfspace forms one facet of the polytope. Representing a polytop as a set of halfspaces is known as the h-representation. The fastest exact methods require the shape to be converted from v-representation to h-representation before the volume can be computed. Facet enumeration, the problem of performing this computation, is solvable in $O(vl(v,n)f)$ time\cite{Fukuda97}, where $f$ is the eventual number of facets, and $l(v,n)$ is the complexity of solving a linear programming problem in $n$ variables and $v$ constraints. LP solving is exponential in its worst case\cite{Klee72}, but is known to be efficient when used against real-world problems. It is also known that when the vertices are generated in this way, on average $f \in \Theta(v)$. In practice, however, I have found facet enumeration to be very slow - slower in fact than estimating a polytope's volume.
 
-Generating a large sample size across several dimensions and several shapes would be very difficult. Where previously we could comfortably generate thousands of data points, here we will have to restrict ourselves to 5 samples from each experiment. In each experiment, we will start with the $n$-dimensional cross-polytope $\{{\bm x} | \sum^n_{i=1}|x_i| \leqslant R\}$, add either 0, 25, 50, 75 or 100 extra vertices, uniformly distributed over the surface of the ball of radius $R$, then estimate the volume of their convex hull. From the definition of the cross-polytope, it is fairly easy to show that it is exactly the convex hull of the points $\pm R{\bm e}_i$ for $i \in \{1,2,...,n\}$, where ${\bm e}_i$ is the vector whose $i^{th}$ component is 1, and all others are 0, so each cross-polytope adds exactly $2n$ vertices to the v-representation. Since $R=\sqrt{n}$, this cross-polytope always contains the unit ball, see Appendix \ref{app_cross_polytope}. These initial points are necessary, since the probability of containing the entire unit ball is low, and there is no easy way to check whether the unit ball is even contained by the random shape, cf Appendix \ref{app_balls}.
+Generating a large sample size across several dimensions and several shapes would be very difficult. Where previously we could comfortably generate thousands of data points, here we will have to restrict ourselves to 5 samples from each experiment. In each experiment, we will start with the $n$-dimensional cross-polytope $\{{\bm x} | \sum^n_{i=1}|x_i| \leqslant R\}$, add either 0, 25, 50, 75 or 100 extra vertices, uniformly distributed over the surface of the ball of radius $R$, then estimate the volume of their convex hull. From the definition of the cross-polytope, it is fairly easy to show that it is exactly the convex hull of the points $\pm R{\bm e}_i$ for $i \in \{1,2,...,n\}$, where ${\bm e}_i$ is the vector whose $i^{th}$ component is 1, and all others are 0, so each cross-polytope adds exactly $2n$ vertices to the v-representation. Since $R=\sqrt{n}$, this cross-polytope always contains the unit ball, see Appendix \ref{app_cross_polytope} for details. These initial points are necessary, since the probability of containing the entire unit ball is low, and there is no easy way to check whether the unit ball is even contained by the random shape, cf Appendix \ref{app_balls}.
 
 The data will then be passed into an exact solver, which will attempt to convert the shape from its v-representation to an h-representation, then compute the exact volume via the Hybrid Orthomormalisation Technique \cite{Bueler98}. If any stage takes longer than one hour of processor time, it will be terminated early. The number of the experiment will be used as a random number seed; the Mersenne Twister will be seeded from 1, 2, 3, 4, and 5, depending on the experiment, and the Ziggurat will be seeded from a number generated by the Mersenne Twister. Anything that remains unclear can hopefully be explained by reading the code. %cite code
+
+
+\begin{table}[h]
+\centering
+\begin{tabular}{| c || p{1cm} | p{1cm} | p{1cm} | p{1cm} | p{1cm}|}
+\hline
+&\multicolumn{5}{p{6cm}|}{Average Computation Time for $v$ Extra Points (minutes)} \\
+\hline
+Number of Dimensions & $v = 0$ & 25 & 50 & 75 & 100\\
+\hline
+4  & 3.88  & 4.85  & 5.53  & 6.16  & 6.79  \\
+5  & 6.64  & 9.40  & 10.81 & 12.20 & 13.51 \\
+6  & 8.51  & 13.02 & 14.62 & 16.49 & 18.38 \\
+7  & 10.05 & 16.77 & 18.63 & 20.83 & 23.84 \\
+8  & 12.58 & 19.93 & 24.86 & 27.32 & 36.29 \\
+9  & 12.94 & 23.91 & 29.39 & 37.76 & 41.38 \\
+10 & 16.29 & 28.31 & 36.93 & 43.20 & 53.53 \\
+\hline
+\end{tabular}
+\caption{Average Computation Times for Volume Estimation}
+\label{tab_estimation_time}
+\end{table}
+
+
+\begin{table}[h]
+\centering
+\begin{tabular}{| c || p{1cm} | p{1cm} | p{1cm} | p{1cm} | p{1cm}|}
+\hline
+&\multicolumn{5}{p{6cm}|}{Average Conversion Time for $v$ Extra Points (seconds)} \\
+\hline
+Number of Dimensions & $v = 0$ & 25 & 50 & 75 & 100\\
+\hline
+4 & 0.0 & 0.0   & 0.0    & 0.0    & 0.0 \\
+5 & 0.0 & 0.0   & 0.0    & 0.2    & 0.2 \\
+6 & 0.0 & 0.2   & 0.4    & 1.0    & 2.6 \\
+7 & 0.0 & 0.0   & 1.0    & 5.4    & 14.8 \\
+8 & 0.0 & 2.0   & 40.4   & 268.0  & 652.0 \\
+9 & 0.0 & 9.0   & 360.2  & 2292.0 & $\bot$ \\
+10& 0.0 & 353.4 & $\bot$ & $\bot$ & $\bot$ \\
+\hline
+\end{tabular}
+\caption{Average Times to convert from v-representation to h-representation. Times of $\bot$ denote a conversion which was timed out for taking more than an hour.}
+\label{tab_conversion_time}
+\end{table}
+
+Table \ref{tab_estimation_time} shows fairly unsurprising linear scaling across both axes. Table \ref{tab_conversion_time} suggests that the conversion from v-representation to h-representation is exponential in both directions. This isn't entirely unexpected - we already know that the shape will always have an exponential number of facets with respect to $n$, and for shapes more complex than 50 points in 10-dimensional space the time to convert from v to h representation is significantly longer than the time to simply estimate the shape's volume via the monte-carlo techniques. Indeed, in one of the preliminary experiments, a shape with $n=10$ and $v=100$ was input into the conversion code for an evening. After 6 hours, the output reported that it had completed $75\%$ of its iterations. Each iteration appeared to take longer than the previous one, but the code will have needed at least 8 hours in total to complete the conversion. Compare this to the 53 minutes needed to estimate one of these volumes to within a reasonable degree of accuracy.
+
+After the conversion, the times to compute volumes are barely worth reporting. The longest time across all shapes was achieved for $n=9$ and $v = 75$, taking 274.9 seconds - negligible in comparison to the $2292.0$ seconds taken for conversion, a trend which continued for all the generated shapes.
+
+\section{Conclusions and Future Work}
+
+Given a vertex representation for a convex shape in $n$ dimensions, using exact methods to compute its volume remains a viable option for $n<9$ and a reasonably simple shape, however as the number of dimensions grows beyond this, it becomes highly impractical to continue with exact methods, and monte-carlo based volume estimation becomes a very attractive option indeed. The specific parameters needed for these operations are generally significantly lower than those theorised, meaning that significant savings can be made for a practical implementation.
+
+However, a convex shape in $10$ dimensions with $120$ vertices is still fairly simple, yet requires roughly an hour of processor time to process. Even estimating the volume of a convex shape is very difficult, and these methods do not provide a substitute for domain specific knowledge and careful consideration of the shapes at hand.
+
+Some questions remain unanswered by this study. These shapes were deliberately chosen to fulfil the properties required by the volume estimation algorithms, however any shape can be transformed to fulfil these properties by sampling a large number of points uniformly, then transforming these such that they contain the unit ball and are contained within a ball of fixed radius. These methods were simply untested in this study, but there are probably also useful experimental results on the number of points necessary to transform a shape ``well". With more computational power, more data points could be generated leading to more information on how these methods scale into more dimensions - a supercomputer cluster could easily generate data for shapes in several hundred dimensions, but these data had to be gathered from a single home computer. It would also be interesting to see how well these methods could be parallelised - each random walk can certainly be simulated independently of all others, so it would probably be possible to scale these methods up to some very large clusters.
+
+To finish, the appendices will investigate various subsidiary features of these methods.
