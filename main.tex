@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass[notitlepage]{report}
 
 % The ams packages are required to insert any mathematical symbols that you may require
 \usepackage{amsfonts}
@@ -30,7 +30,7 @@
 \usepackage{caption}
 \usepackage{url}
 \usepackage{layout}
-\usepackage{subfig}
+\usepackage[loose]{subfigure}
 \usepackage{lineno}
 \usepackage{bm}
 
@@ -50,7 +50,7 @@
 
 \begin{document}
 
-%\input{./title.tex}
+\input{./title.tex}
 
 \newpage
 
@@ -73,13 +73,13 @@
 
 \input{./cross_polytope.tex}
 
-\chapter{The Number of Facets on a Random Polytope} \label{app_cyclic_polytope}
+\chapter{The Number of Facets on a Pathological Polytope} \label{app_cyclic_polytope}
 
 \input{./cyclic_polytope.tex}
 
-\chapter{Properties of Random Hulls Chosen from the Surfaces of Balls} \label{app_balls}
+%\chapter{Properties of Random Hulls Chosen from the Surfaces of Balls} %\label{app_balls}
 
-\input{./ball_proofs.tex}
+%\input{./ball_proofs.tex}
 
 \bibliographystyle{plain}
 \bibliography{bibliography}
